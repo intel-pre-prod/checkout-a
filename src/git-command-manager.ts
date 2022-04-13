@@ -44,6 +44,11 @@ export interface IGitCommandManager {
   tagExists(pattern: string): Promise<boolean>
   tryClean(): Promise<boolean>
   tryConfigUnset(configKey: string, globalConfig?: boolean): Promise<boolean>
+  tryConfigUnsetValue(
+    configKey: string,
+    valueRegex: string,
+    globalConfig?: boolean
+  )
   tryDisableAutomaticGarbageCollection(): Promise<boolean>
   tryGetFetchUrl(): Promise<string>
   tryReset(): Promise<boolean>
@@ -352,6 +357,23 @@ class GitCommandManager {
     return output.exitCode === 0
   }
 
+  async tryConfigUnsetValue(
+    configKey: string,
+    valueRegex: string,
+    globalConfig?: boolean
+  ): Promise<boolean> {
+    const output = await this.execGit(
+      [
+        'config',
+        globalConfig ? '--global' : '--local',
+        '--unset',
+        configKey,
+        valueRegex
+      ],
+      true
+    )
+    return output.exitCode === 0
+  }
   async tryDisableAutomaticGarbageCollection(): Promise<boolean> {
     const output = await this.execGit(
       ['config', '--local', 'gc.auto', '0'],

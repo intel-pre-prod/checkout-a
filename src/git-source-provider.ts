@@ -250,6 +250,13 @@ export async function cleanup(repositoryPath: string): Promise<void> {
   // Remove auth
   const authHelper = gitAuthHelper.createAuthHelper(git)
   await authHelper.removeAuth()
+
+  // always do this last, otherwise other git commands may fail
+  await git
+    .tryConfigUnsetValue('safe.directory', `'${repositoryPath}$'`, true)
+    .catch(error => {
+      core.info(`Failed to remove global safe directory with error: ${error}`)
+    })
 }
 
 async function getGitCommandManager(

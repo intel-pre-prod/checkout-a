@@ -7132,6 +7132,18 @@ class GitCommandManager {
             return output.exitCode === 0;
         });
     }
+    tryConfigUnsetValue(configKey, valueRegex, globalConfig) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const output = yield this.execGit([
+                'config',
+                globalConfig ? '--global' : '--local',
+                '--unset',
+                configKey,
+                valueRegex
+            ], true);
+            return output.exitCode === 0;
+        });
+    }
     tryDisableAutomaticGarbageCollection() {
         return __awaiter(this, void 0, void 0, function* () {
             const output = yield this.execGit(['config', '--local', 'gc.auto', '0'], true);
@@ -7348,7 +7360,9 @@ function getSource(settings) {
         // Initialize the repository
         if (!fsHelper.directoryExistsSync(path.join(settings.repositoryPath, '.git'))) {
             core.startGroup('Initializing the repository');
-            yield git.config("safe.directory", settings.repositoryPath, true, true).catch(error => {
+            yield git
+                .config('safe.directory', settings.repositoryPath, true, true)
+                .catch(error => {
                 core.info(`Failed to initialize safe directory with error: ${error}`);
             });
             yield git.init();
@@ -7476,6 +7490,12 @@ function cleanup(repositoryPath) {
         // Remove auth
         const authHelper = gitAuthHelper.createAuthHelper(git);
         yield authHelper.removeAuth();
+        // always do this last, otherwise other git commands may fail
+        yield git
+            .tryConfigUnsetValue('safe.directory', `'${repositoryPath}$'`, true)
+            .catch(error => {
+            core.info(`Failed to remove global safe directory with error: ${error}`);
+        });
     });
 }
 exports.cleanup = cleanup;
