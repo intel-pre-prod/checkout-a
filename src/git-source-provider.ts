@@ -82,6 +82,11 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
     !fsHelper.directoryExistsSync(path.join(settings.repositoryPath, '.git'))
   ) {
     core.startGroup('Initializing the repository')
+    await git
+      .config('safe.directory', settings.repositoryPath, true, true)
+      .catch(error => {
+        core.info(`Failed to initialize safe directory with error: ${error}`)
+      })
     await git.init()
     await git.remoteAdd('origin', repositoryUrl)
     core.endGroup()
